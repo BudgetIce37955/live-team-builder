@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Team Builder</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --card: #ffffff;
+    --border: #e3e3e8;
+    --text: #1a1a1a;
+    --muted: #666;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 0 10px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .row > .field { flex: 1 1 160px; min-width: 160px; }
+  .count-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .name-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .name-row .num {
+    flex: 0 0 28px;
+    text-align: right;
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .name-row input[type="text"] {
+    flex: 1 1 auto;
+  }
+  .icon-btn {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--muted);
+  }
+  .icon-btn:hover { color: var(--danger); border-color: var(--danger); }
+  .add-row-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 10px;
+    background: #fff;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font: inherit;
+  }
+  .add-row-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  button.action {
+    font: inherit;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.ghost { background: transparent; }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .group {
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .group h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .group ol {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .group li { margin: 2px 0; }
+  .error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .summary {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  details > summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 480px) {
+    body { padding: 16px 12px; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Live Team Builder <span id="memberCount" class="count-badge">0人</span></h1>
+
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label for="memberNum">参加人数</label>
+        <input id="memberNum" type="number" min="0" value="0" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="maxPerGroup">1組あたりの上限</label>
+        <input id="maxPerGroup" type="number" min="1" value="4" inputmode="numeric">
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <label>メンバー名</label>
+      <div class="hint">人数を変えると入力欄が増減します。空欄のままでも自動で「メンバーN」が割り当てられます。</div>
+      <div id="nameList" class="name-list"></div>
+      <button id="addRow" type="button" class="add-row-btn">＋ メンバーを追加</button>
+    </div>
+
+    <div class="row" style="margin-top: 16px;">
+      <div class="field checkbox-row">
+        <input id="shuffle" type="checkbox" checked>
+        <label for="shuffle" style="margin: 0; font-weight: normal;">ランダムに割り振る</label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="generate" class="action primary">グループを作る</button>
+      <button id="clear" class="action ghost">入力をクリア</button>
+    </div>
+    <div id="error" class="error" hidden></div>
+  </div>
+
+  <div id="resultCard" class="card" hidden>
+    <div class="row" style="justify-content: space-between;">
+      <strong>結果</strong>
+      <button id="copy" class="action ghost">テキストをコピー</button>
+    </div>
+    <div id="summary" class="summary"></div>
+    <div id="groups" class="groups"></div>
+  </div>
+
+  <details class="card">
+    <summary>使い方</summary>
+    <ul style="font-size: 14px; color: var(--muted);">
+      <li>「参加人数」を入力するとその数だけ名前欄が出ます。＋ボタンや×ボタンでも増減できます。</li>
+      <li>名前を入れずに空欄のまま実行すると、自動で「メンバー1」「メンバー2」…が使われます。</li>
+      <li>入力内容はブラウザに自動保存されます。次回開いたときに復元されます。</li>
+      <li>グループ数は <code>ceil(人数 / 上限)</code>。できるだけ均等に割り振られます（最大差1人）。</li>
+      <li>例: 8人・上限4 → 2組（4, 4）／9人・上限4 → 3組（3, 3, 3）／10人・上限4 → 3組（4, 3, 3）</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = "live-team-builder:v1";
+  const $ = (id) => document.getElementById(id);
+  const memberNumEl = $("memberNum");
+  const maxEl = $("maxPerGroup");
+  const shuffleEl = $("shuffle");
+  const memberCountEl = $("memberCount");
+  const nameListEl = $("nameList");
+  const errorEl = $("error");
+  const resultCard = $("resultCard");
+  const summaryEl = $("summary");
+  const groupsEl = $("groups");
+
+  let names = []; // string[]
+
+  function updateBadge() {
+    memberCountEl.textContent = names.length + "人";
+    memberNumEl.value = String(names.length);
+  }
+
+  function renderRows() {
+    nameListEl.innerHTML = "";
+    names.forEach((value, idx) => {
+      const row = document.createElement("div");
+      row.className = "name-row";
+
+      const num = document.createElement("div");
+      num.className = "num";
+      num.textContent = (idx + 1) + ".";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.placeholder = "メンバー" + (idx + 1);
+      input.autocomplete = "off";
+      input.addEventListener("input", (e) => {
+        names[idx] = e.target.value;
+        saveState();
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (idx === names.length - 1) {
+            addRow(true);
+          } else {
+            const next = nameListEl.querySelectorAll("input[type=text]")[idx + 1];
+            if (next) next.focus();
+          }
+        }
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "icon-btn";
+      remove.title = "この行を削除";
+      remove.textContent = "×";
+      remove.addEventListener("click", () => {
+        names.splice(idx, 1);
+        updateBadge();
+        renderRows();
+        saveState();
+      });
+
+      row.appendChild(num);
+      row.appendChild(input);
+      row.appendChild(remove);
+      nameListEl.appendChild(row);
+    });
+  }
+
+  function setCount(n) {
+    n = Math.max(0, Math.floor(Number(n) || 0));
+    if (n > names.length) {
+      while (names.length < n) names.push("");
+    } else if (n < names.length) {
+      names.length = n;
+    }
+    updateBadge();
+    renderRows();
+    saveState();
+  }
+
+  function addRow(focus) {
+    names.push("");
+    updateBadge();
+    renderRows();
+    saveState();
+    if (focus) {
+      const inputs = nameListEl.querySelectorAll("input[type=text]");
+      const last = inputs[inputs.length - 1];
+      if (last) last.focus();
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        names = ["", "", "", ""]; // 初期表示は4つ
+        return;
+      }
+      const s = JSON.parse(raw);
+      names = Array.isArray(s.names) ? s.names.map(String) : ["", "", "", ""];
+      if (Number.isFinite(s.max) && s.max >= 1) maxEl.value = s.max;
+      if (typeof s.shuffle === "boolean") shuffleEl.checked = s.shuffle;
+    } catch (_) {
+      names = ["", "", "", ""];
+    }
+  }
+
+  function saveState() {
+    const s = {
+      names: names,
+      max: Number(maxEl.value) || 1,
+      shuffle: shuffleEl.checked,
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (_) {}
+  }
+
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function divideMembers(members, maxPerGroup) {
+    const numGroups = Math.ceil(members.length / maxPerGroup);
+    const groups = Array.from({ length: numGroups }, () => []);
+    members.forEach((m, i) => groups[i % numGroups].push(m));
+    return groups;
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+  }
+  function clearError() {
+    errorEl.hidden = true;
+    errorEl.textContent = "";
+  }
+
+  function render(groups) {
+    groupsEl.innerHTML = "";
+    groups.forEach((g, i) => {
+      const div = document.createElement("div");
+      div.className = "group";
+      const h = document.createElement("h3");
+      h.textContent = `グループ ${i + 1}（${g.length}人）`;
+      const ol = document.createElement("ol");
+      g.forEach((name) => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        ol.appendChild(li);
+      });
+      div.appendChild(h);
+      div.appendChild(ol);
+      groupsEl.appendChild(div);
+    });
+    const total = groups.reduce((s, g) => s + g.length, 0);
+    const sizes = groups.map((g) => g.length).join(", ");
+    summaryEl.textContent = `合計 ${total}人 / ${groups.length}組（${sizes}）`;
+    resultCard.hidden = false;
+  }
+
+  function generate() {
+    clearError();
+    const filled = names.map((n, i) => (n.trim() || `メンバー${i + 1}`));
+    const max = parseInt(maxEl.value, 10);
+
+    if (filled.length === 0) {
+      showError("参加人数を1人以上にしてください。");
+      resultCard.hidden = true;
+      return;
+    }
+    if (!Number.isFinite(max) || max < 1) {
+      showError("上限人数は1以上の整数を入力してください。");
+      resultCard.hidden = true;
+      return;
+    }
+
+    const ordered = shuffleEl.checked ? shuffleArray(filled) : filled;
+    const groups = divideMembers(ordered, max);
+    render(groups);
+    saveState();
+  }
+
+  function asPlainText() {
+    const blocks = [];
+    groupsEl.querySelectorAll(".group").forEach((g) => {
+      const title = g.querySelector("h3").textContent;
+      const items = Array.from(g.querySelectorAll("li")).map((li) => "  - " + li.textContent);
+      blocks.push(title + "\n" + items.join("\n"));
+    });
+    return blocks.join("\n\n");
+  }
+
+  memberNumEl.addEventListener("input", (e) => setCount(e.target.value));
+  $("addRow").addEventListener("click", () => addRow(true));
+  $("generate").addEventListener("click", generate);
+  $("clear").addEventListener("click", () => {
+    names = [];
+    updateBadge();
+    renderRows();
+    resultCard.hidden = true;
+    clearError();
+    saveState();
+  });
+  $("copy").addEventListener("click", async () => {
+    const text = asPlainText();
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = $("copy");
+      const orig = btn.textContent;
+      btn.textContent = "コピーしました";
+      setTimeout(() => (btn.textContent = orig), 1200);
+    } catch (_) {
+      showError("クリップボードにコピーできませんでした。");
+    }
+  });
+  maxEl.addEventListener("input", saveState);
+  shuffleEl.addEventListener("change", saveState);
+
+  loadState();
+  updateBadge();
+  renderRows();
+})();
+</script>
+</body>
+</html>
